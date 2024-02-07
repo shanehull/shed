@@ -18,7 +18,8 @@ jobs:
         uses: google-github-actions/release-please-action@v4
         with:
           token: ${{secrets.GITHUB_TOKEN}}
-          bump-minor-pre-major: true # ensures we can bump pre major before releasing a 1.0.0
+          bump-minor-pre-major: true
+          bump-patch-for-minor-pre-major: true
       - uses: actions/checkout@v4
         if: ${{ steps.release-please.outputs.release_created }}
       - uses: actions/setup-go@v4
