@@ -1,0 +1,43 @@
+name: Build & Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  Release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release Please
+        id: release-please
+        uses: google-github-actions/release-please-action@v4
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+      - uses: actions/checkout@v4
+        if: ${{ steps.release-please.outputs.release_created }}
+      - uses: actions/setup-go@v4
+        if: ${{ steps.release-please.outputs.release_created }}
+        with:
+          go-version: 1.21
+      - name: Build
+        if: ${{ steps.release-please.outputs.release_created }}
+        uses: crazy-max/ghaction-xgo@v3
+        with:
+          xgo_version: latest
+          go_version: 1.21.x
+          pkg: cmd/shed/
+          dest: bin
+          prefix: shed
+          targets: linux/amd64,linux/arm64,darwin/amd64,darwin/arm64
+          v: true
+          ldflags: -s -w
+      - name: Upload Release Binaries
+        if: ${{ steps.release-please.outputs.release_created }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ steps.release-please.outputs.tag_name }} ./bin/*
