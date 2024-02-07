@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -28,17 +27,9 @@ var app = &cli.App{
 	Description:          "A toolbox of tools for The Shed.",
 	EnableBashCompletion: true,
 	Compiled:             time.Now(),
-	Before: func(cCtx *cli.Context) error {
+	Before: func(_ *cli.Context) error {
 		if bashCompletionsMode {
 			return nil
-		}
-
-		if cCtx.NArg() == 0 {
-			err := cli.ShowAppHelp(cCtx)
-			if err != nil {
-				return err
-			}
-			return errors.New("a command is required")
 		}
 
 		return nil
