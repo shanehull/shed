@@ -27,10 +27,15 @@ var vimCmd = "vim"
 
 var defaultSubDir = "0-inbox"
 
-var fileTemplate = `# %s 
+var fileTemplate = `---
+date: %s
+tags:
+  - 
+---
 
-Links:
-%s
+# %s 
+
+
 `
 
 var zetCommand = &cli.Command{
@@ -99,8 +104,8 @@ var zetCommand = &cli.Command{
 
 		initialFileContents := fmt.Sprintf(
 			fileTemplate,
-			titleCase(strings.ReplaceAll(filename, "-", " ")),
 			time.Now().Format("2006-01-02"),
+			titleCase(strings.ReplaceAll(filename, "-", " ")),
 		)
 
 		if err := os.WriteFile(fullFilePath, []byte(initialFileContents), 0o644); err != nil {
@@ -108,7 +113,7 @@ var zetCommand = &cli.Command{
 			os.Exit(1)
 		}
 
-		cmd := exec.Command(vimCmd, "+normal ggzzA", "+startinsert!", fullFilePath)
+		cmd := exec.Command(vimCmd, "+normal G", "+startinsert!", fullFilePath)
 
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
