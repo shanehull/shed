@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/shanehull/shed/compare/v0.0.2...v0.0.3) (2024-02-14)
+
+
+### Bug Fixes
+
+* nvim init ([e7fb10a](https://github.com/shanehull/shed/commit/e7fb10ac8c7cdc80f867248f948a81de35f41fdc))
+
 ## [0.0.2](https://github.com/shanehull/shed/compare/v0.0.1...v0.0.2) (2024-02-08)
 
 
