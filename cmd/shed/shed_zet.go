@@ -19,18 +19,21 @@ import (
 
 var (
 	secondBrain string
-	filename    string
+	fileName    string
 	subDir      string
 )
 
-var vimCmd = "vim"
+var vimCmd = "nvim"
+var vimInit = "~/.config/nvim/init.lua"
 
 var defaultSubDir = "0-inbox"
 
 var fileTemplate = `---
-date: %s
+id: %s
+aliases: []
 tags:
-  - 
+  - change-me
+date: "%s"
 ---
 
 # %s 
@@ -62,7 +65,7 @@ var zetCommand = &cli.Command{
 			Aliases:     []string{"f"},
 			Value:       "",
 			Usage:       "the name of the file (note) to create",
-			Destination: &filename,
+			Destination: &fileName,
 		},
 	},
 	Action: func(cCtx *cli.Context) error {
@@ -80,12 +83,12 @@ var zetCommand = &cli.Command{
 			subDir = defaultSubDir
 		}
 
-		if filename == "" {
+		if fileName == "" {
 			var err error
 
 			path := fmt.Sprintf("%s/%s", secondBrain, subDir)
 
-			filename, err = promptUniqueDashedFileName(path)
+			fileName, err = promptUniqueDashedFileName(path)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -100,12 +103,15 @@ var zetCommand = &cli.Command{
 			}
 		}
 
-		fullFilePath := fmt.Sprintf("%s/%s/%s.md", secondBrain, subDir, filename)
+		fullFilePath := fmt.Sprintf("%s/%s/%s.md", secondBrain, subDir, fileName)
+
+		fmt.Println("Creating note:", fileName)
 
 		initialFileContents := fmt.Sprintf(
 			fileTemplate,
+			fileName,
 			time.Now().Format("2006-01-02"),
-			titleCase(strings.ReplaceAll(filename, "-", " ")),
+			titleCase(strings.ReplaceAll(fileName, "-", " ")),
 		)
 
 		if err := os.WriteFile(fullFilePath, []byte(initialFileContents), 0o644); err != nil {
@@ -113,7 +119,14 @@ var zetCommand = &cli.Command{
 			os.Exit(1)
 		}
 
-		cmd := exec.Command(vimCmd, "+normal G", "+startinsert!", fullFilePath)
+		cmd := exec.Command(
+			vimCmd,
+			"-u",
+			vimInit,
+			"+normal G",
+			"+startinsert!",
+			fullFilePath,
+		)
 
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -177,7 +190,7 @@ func promptUniqueDashedFileName(path string) (string, error) {
 
 		reg := regexp.MustCompile(`^[A-Za-z0-9-]+$`)
 		if !reg.MatchString(input) {
-			return errors.New("invalid filename")
+			return errors.New("invalid file name")
 		}
 
 		val = input
@@ -186,7 +199,7 @@ func promptUniqueDashedFileName(path string) (string, error) {
 	}
 
 	s := promptui.Prompt{
-		Label:     "Filename",
+		Label:     "File name",
 		Validate:  validate,
 		AllowEdit: true,
 	}
