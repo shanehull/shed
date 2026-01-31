@@ -10,7 +10,7 @@ import (
 	urllib "net/url"
 
 	"github.com/manifoldco/promptui"
-	"github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 var url string
