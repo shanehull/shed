@@ -39,6 +39,14 @@ jobs:
           targets: linux/amd64,linux/arm64,darwin/amd64,darwin/arm64
           v: true
           ldflags: -s -w
+      - name: Generate Checkums
+        run: |
+          cd bin
+          for file in *; do
+              if [ -f "$file" ]; then
+                  echo "$file: sha256-$(sha256sum "$file" | awk '{ print $1 }' | xxd -r -p | base64)" >> checksums.txt
+              fi
+          done
       - name: Upload Release Binaries
         if: ${{ steps.release-please.outputs.release_created }}
         env:
