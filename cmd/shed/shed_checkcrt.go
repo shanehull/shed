@@ -87,7 +87,10 @@ func getServerCertChain(serverName string) [][]*x509.Certificate {
 	if err != nil {
 		panic(err)
 	}
-	defer resp.Body.Close()
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	return resp.TLS.VerifiedChains
 }
