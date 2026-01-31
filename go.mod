@@ -1,12 +1,11 @@
 module gitlab.com/shanehull/scripts
 
-go 1.21.5
+go 1.25
 
 require (
 	github.com/manifoldco/promptui v0.9.0
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.27.1
-	golang.org/x/text v0.14.0
 )
 
 require (
