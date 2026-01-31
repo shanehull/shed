@@ -10,21 +10,20 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-
 	"github.com/manifoldco/promptui"
-	"github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 var (
 	secondBrain string
-	fileName    string
+	title       string
 	subDir      string
 )
 
-var vimCmd = "nvim"
-var vimInit = "~/.config/nvim/init.lua"
+var (
+	vimCmd  = "nvim"
+	vimInit = "~/.config/nvim/init.lua"
+)
 
 var defaultSubDir = "0-inbox"
 
@@ -61,11 +60,11 @@ var zetCommand = &cli.Command{
 			Destination: &subDir,
 		},
 		&cli.StringFlag{
-			Name:        "file-name",
+			Name:        "title",
 			Aliases:     []string{"f"},
 			Value:       "",
 			Usage:       "the name of the file (note) to create",
-			Destination: &fileName,
+			Destination: &title,
 		},
 	},
 	Action: func(cCtx *cli.Context) error {
@@ -83,40 +82,47 @@ var zetCommand = &cli.Command{
 			subDir = defaultSubDir
 		}
 
-		if fileName == "" {
-			var err error
+		var noteTitle string
+		var noteID string
+		var err error
 
-			path := fmt.Sprintf("%s/%s", secondBrain, subDir)
+		path := fmt.Sprintf("%s/%s", secondBrain, subDir)
 
-			fileName, err = promptUniqueDashedFileName(path)
+		if title != "" {
+			noteTitle = title
+			noteID = createSlug(noteTitle)
+
+			if _, statErr := os.Stat(fmt.Sprintf("%s/%s.md", path, noteID)); statErr == nil {
+				fmt.Printf("Error: Note with ID '%s' already exists.\n", noteID)
+				os.Exit(1)
+			}
+		} else {
+			noteTitle, noteID, err = getUniqueNoteDetails(path)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 		}
 
-		if _, err := os.Stat(fmt.Sprintf("%s/%s", secondBrain, subDir)); os.IsNotExist(err) {
-			err := os.MkdirAll(fmt.Sprintf("%s/%s", secondBrain, subDir), 0o755)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			if err := os.MkdirAll(path, 0o755); err != nil {
+				return err
 			}
 		}
 
-		fullFilePath := fmt.Sprintf("%s/%s/%s.md", secondBrain, subDir, fileName)
+		fullFilePath := fmt.Sprintf("%s/%s.md", path, noteID)
 
-		fmt.Println("Creating note:", fileName)
+		fmt.Println("Creating note:", noteID)
 
 		initialFileContents := fmt.Sprintf(
 			fileTemplate,
-			fileName,
+			noteID,
 			time.Now().Format("2006-01-02"),
-			titleCase(strings.ReplaceAll(fileName, "-", " ")),
+			noteTitle,
 		)
 
 		if err := os.WriteFile(fullFilePath, []byte(initialFileContents), 0o644); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 
 		cmd := exec.Command(
@@ -131,8 +137,7 @@ var zetCommand = &cli.Command{
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 
-		err := cmd.Run()
-		if err != nil {
+		if err := cmd.Run(); err != nil {
 			log.Fatal(err)
 		}
 
@@ -140,74 +145,50 @@ var zetCommand = &cli.Command{
 	},
 }
 
-func titleCase(s string) string {
-	containsIgnoreCase := func(s []string, str string) bool {
-		for _, v := range s {
-			if strings.EqualFold(v, str) {
-				return true
-			}
+func getUniqueNoteDetails(path string) (string, string, error) {
+	for {
+		title, err := promptForTitle()
+		if err != nil {
+			return "", "", err
 		}
-		return false
-	}
 
-	excludedConjunctions := []string{
-		"but",
-		"and",
-		"nor",
-		"or",
-		"for",
-		"so",
-		"as",
-		"if",
-		"yet",
-		"to",
-	}
+		slug := createSlug(title)
 
-	titleCaser := cases.Title(language.English)
-
-	words := strings.Fields(s)
-
-	for i, word := range words {
-		if containsIgnoreCase(excludedConjunctions, word) {
-			words[i] = strings.ToLower(word)
-		} else {
-			words[i] = titleCaser.String(word)
+		fullPath := fmt.Sprintf("%s/%s.md", path, slug)
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			return title, slug, nil
 		}
-	}
 
-	return strings.Join(words, " ")
+		fmt.Printf("A note with the ID '%s' already exists. Please choose a different title.\n", slug)
+	}
 }
 
-func promptUniqueDashedFileName(path string) (string, error) {
-	var val string
-
+func promptForTitle() (string, error) {
 	validate := func(input string) error {
-		fullPath := fmt.Sprintf("%s/%s.md", path, input)
-
-		if _, err := os.Stat(fullPath); err == nil {
-			return errors.New("file already exists")
+		if strings.TrimSpace(input) == "" {
+			return errors.New("title cannot be empty")
 		}
-
-		reg := regexp.MustCompile(`^[A-Za-z0-9-]+$`)
-		if !reg.MatchString(input) {
-			return errors.New("invalid file name")
-		}
-
-		val = input
-
 		return nil
 	}
 
-	s := promptui.Prompt{
-		Label:     "File name",
-		Validate:  validate,
-		AllowEdit: true,
+	prompt := promptui.Prompt{
+		Label:    "Note Title",
+		Validate: validate,
 	}
 
-	_, err := s.Run()
-	if err != nil {
-		return "", err
-	}
+	return prompt.Run()
+}
 
-	return val, nil
+func createSlug(s string) string {
+	s = strings.ToLower(s)
+
+	reg := regexp.MustCompile(`[^a-z0-9\s]+`)
+	s = reg.ReplaceAllString(s, "")
+
+	s = strings.ReplaceAll(s, " ", "-")
+
+	regDash := regexp.MustCompile(`-+`)
+	s = regDash.ReplaceAllString(s, "-")
+
+	return strings.Trim(s, "-")
 }
