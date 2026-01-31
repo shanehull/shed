@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -11,7 +12,7 @@ import (
 	"time"
 
 	"github.com/manifoldco/promptui"
-	cli "github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v3"
 )
 
 var (
@@ -67,7 +68,7 @@ var zetCommand = &cli.Command{
 			Destination: &title,
 		},
 	},
-	Action: func(cCtx *cli.Context) error {
+	Action: func(ctx context.Context, cmd *cli.Command) error {
 		if secondBrain == "" {
 			secondBrainEnv, ok := os.LookupEnv("SECOND_BRAIN")
 			if ok {
@@ -125,7 +126,7 @@ var zetCommand = &cli.Command{
 			return err
 		}
 
-		cmd := exec.Command(
+		vimCmd := exec.Command(
 			vimCmd,
 			"-u",
 			vimInit,
@@ -134,10 +135,10 @@ var zetCommand = &cli.Command{
 			fullFilePath,
 		)
 
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
+		vimCmd.Stdin = os.Stdin
+		vimCmd.Stdout = os.Stdout
 
-		if err := cmd.Run(); err != nil {
+		if err := vimCmd.Run(); err != nil {
 			log.Fatal(err)
 		}
 

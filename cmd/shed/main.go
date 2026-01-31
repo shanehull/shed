@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
-	cli "github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v3"
 )
 
 var bashCompletionsMode bool
@@ -16,23 +15,22 @@ func main() {
 		bashCompletionsMode = true
 	}
 
-	if err := app.RunContext(context.Background(), os.Args); err != nil {
+	if err := app.Run(context.Background(), os.Args); err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 }
 
-var app = &cli.App{
-	Usage:                "The Shed toolbox.",
-	Description:          "A toolbox of tools for The Shed.",
-	EnableBashCompletion: true,
-	Compiled:             time.Now(),
-	Before: func(_ *cli.Context) error {
+var app = &cli.Command{
+	Usage:                 "The Shed toolbox.",
+	Description:           "A toolbox of tools for The Shed.",
+	EnableShellCompletion: true,
+	Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
 		if bashCompletionsMode {
-			return nil
+			return ctx, nil
 		}
 
-		return nil
+		return nil, nil
 	},
 	Commands: []*cli.Command{
 		zetCommand,
