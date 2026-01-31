@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -10,7 +11,7 @@ import (
 	urllib "net/url"
 
 	"github.com/manifoldco/promptui"
-	cli "github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v3"
 )
 
 var url string
@@ -28,7 +29,7 @@ var checkcrtCommand = &cli.Command{
 			Destination: &url,
 		},
 	},
-	Action: func(_ *cli.Context) error {
+	Action: func(ctx context.Context, cmd *cli.Command) error {
 		var err error
 
 		if url == "" {

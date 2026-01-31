@@ -3,33 +3,35 @@ package main
 import (
 	"bytes"
 	"testing"
+	"context"
 
 	"github.com/stretchr/testify/assert"
-	cli "github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v3"
 )
 
-func testApp() *cli.App {
+func testApp() *cli.Command {
 	tapp := *app
 	return &tapp
 }
 
-func AppRun_Test(t *testing.T) {
-	var out, err bytes.Buffer
+func AppRunTest(t *testing.T) {
+	var out, stderr bytes.Buffer
 
 	shed := testApp()
 
 	shed.Writer = &out
-	shed.ErrWriter = &err
+	shed.ErrWriter = &stderr
 
-	// check app launches up correctly
-	assert.NoError(t, shed.Run([]string{
-		"dcf",
+	err := shed.Run(context.Background(), []string{
+		"shed",
 		"-h",
-	}))
+	})
+	assert.NoError(t, err)
 
-	// check that the output looks more or less correct
-	assert.Contains(t, out.String(), "shed - The Shed toolbox.")
-	assert.NotContains(t, out.String(), "error")
-	assert.NotContains(t, out.String(), "panic")
-	assert.Empty(t, err.String())
+	output := out.String()
+	assert.Contains(t, output, "shed - The Shed toolbox.")
+	assert.NotContains(t, output, "error")
+	assert.NotContains(t, output, "panic")
+	
+	assert.Empty(t, stderr.String()) 
 }
