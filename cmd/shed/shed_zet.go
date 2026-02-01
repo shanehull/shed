@@ -1,8 +1,8 @@
 package main
 
 import (
+	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/manifoldco/promptui"
 	cli "github.com/urfave/cli/v3"
 )
 
@@ -165,19 +164,25 @@ func getUniqueNoteDetails(path string) (string, string, error) {
 }
 
 func promptForTitle() (string, error) {
-	validate := func(input string) error {
-		if strings.TrimSpace(input) == "" {
-			return errors.New("title cannot be empty")
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Print("Note Title: ")
+
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			return "", err
 		}
-		return nil
-	}
 
-	prompt := promptui.Prompt{
-		Label:    "Note Title",
-		Validate: validate,
-	}
+		input = strings.TrimSpace(input)
 
-	return prompt.Run()
+		if input == "" {
+			fmt.Println("Title cannot be empty")
+			continue
+		}
+
+		return input, nil
+	}
 }
 
 func createSlug(s string) string {
