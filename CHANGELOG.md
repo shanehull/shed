@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.0](https://github.com/shanehull/shed/compare/v0.0.3...v0.1.0) (2026-02-03)
+
+
+### Features
+
+* input zetelkasten title not id ([#14](https://github.com/shanehull/shed/issues/14)) ([6e3e2d8](https://github.com/shanehull/shed/commit/6e3e2d8f3eb8b2a88408fa93ea7059b280b3446a))
+
+
+### Bug Fixes
+
+* update go and urfave ([#16](https://github.com/shanehull/shed/issues/16)) ([ff59eed](https://github.com/shanehull/shed/commit/ff59eed03d643b82ac2079d137c60387a99981ca))
+* use std lib on title prompt ([#17](https://github.com/shanehull/shed/issues/17)) ([1618c5d](https://github.com/shanehull/shed/commit/1618c5dd17e434ba453616d120f14fc4696424b4))
+
 ## [0.0.3](https://github.com/shanehull/shed/compare/v0.0.2...v0.0.3) (2024-02-14)
 
 
